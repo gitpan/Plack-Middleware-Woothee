@@ -3,19 +3,88 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use parent 'Plack::Middleware';
-use Woothee;
+
+use Plack::Util::Accessor qw/parse_all_req/;
 
 sub call {
     my($self, $env) = @_;
 
-    $env->{'psgix.woothee'} = Woothee->parse($env->{HTTP_USER_AGENT});
+    $env->{'psgix.woothee'} = Plack::Middleware::Woothee::Object->new(user_agent => $env->{HTTP_USER_AGENT});
+
+    $env->{'psgix.woothee'}->parse if $self->parse_all_req;
+
     $self->app->($env);
 }
 
 1;
+
+package Plack::Middleware::Woothee::Object;
+use strict;
+use warnings;
+use Woothee;
+
+sub new {
+    my ($class, %args) = @_;
+    bless \%args, $class;
+}
+
+sub user_agent { $_[0]->{user_agent} }
+
+sub name {
+    return $_[0]->_get('name');
+}
+
+sub category {
+    return $_[0]->_get('category');
+}
+
+sub os {
+    return $_[0]->_get('os');
+}
+
+sub vendor {
+    return $_[0]->_get('vendor');
+}
+
+sub version {
+    return $_[0]->_get('version');
+}
+
+sub _get {
+    my ($self, $key) = @_;
+
+    unless ($self->{$key}) {
+        $self->parse;
+    }
+
+    return $self->{$key};
+}
+
+sub parse {
+    my $self = shift;
+
+    $self->{parse} ||= Woothee->parse($self->{user_agent});
+
+    for my $key (keys %{$self->{parse}}) {
+        $self->{$key} = delete $self->{parse}{$key};
+    }
+}
+
+sub is_crawler {
+    my $self = shift;
+
+    unless ( exists $self->{is_crawler} ) {
+        $self->{is_crawler} ||= Woothee->is_crawler($self->{user_agent});
+    }
+
+    return $self->{is_crawler};
+}
+
+1;
+
 __END__
 
 =head1 NAME
@@ -24,7 +93,7 @@ Plack::Middleware::Woothee - Set woothee information based on User-Agent
 
 =head1 VERSION
 
-This document describes Plack::Middleware::Woothee version 0.01.
+This document describes Plack::Middleware::Woothee version 0.02.
 
 =head1 SYNOPSIS
 

@@ -1,15 +1,18 @@
 Build.PL
 Changes
-lib/Plack/Middleware/Woothee.pm
 LICENSE
-MANIFEST			This list of files
 META.json
-META.yml
-README
+README.md
+author/requires.cpanm
+cpanfile
+lib/Plack/Middleware/Woothee.pm
 t/000_load.t
 t/001_basic.t
+t/002_parse.t
+t/003_is_crawler.t
 xt/perlcritic.t
 xt/pod.t
 xt/podcoverage.t
-xt/podspell.t
 xt/podsynopsis.t
+META.yml
+MANIFEST
